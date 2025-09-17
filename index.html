@@ -29,7 +29,7 @@
     height: 80px;
     object-fit: cover;
     border-radius: 8px;
-    cursor: pointer;
+    cursor: default;
   }
   .bin-content {
     flex-grow: 1;
@@ -57,7 +57,7 @@
     cursor: pointer;
   }
   #exportBtn, #addBinBtn {
-    display: inline-block;
+    display: none; /* cachés par défaut */
     margin: 10px 10px 0 0;
     padding: 10px 20px;
     font-size: 16px;
@@ -69,6 +69,9 @@
   }
   #addBinBtn {
     background: #2196f3;
+  }
+  #exportBtn.visible, #addBinBtn.visible {
+    display: inline-block; /* affichés quand la classe visible est ajoutée */
   }
   .hidden {
     display: none;
@@ -157,7 +160,7 @@
 
 <button id="exportBtn">Exporter le site complet</button>
 <button id="adminBtn">Mode Admin</button>
-<button id="addBinBtn" class="hidden">Ajouter une poubelle</button>
+<button id="addBinBtn">Ajouter une poubelle</button>
 
 <!-- Popup changement image -->
 <div id="overlay" class="hidden"></div>
@@ -196,7 +199,11 @@
       }
       adminMode = true;
       adminBtn.textContent = "Quitter mode Admin";
-      addBinBtn.classList.remove('hidden');
+
+      // Afficher les boutons uniquement en mode admin
+      exportBtn.classList.add('visible');
+      addBinBtn.classList.add('visible');
+
       document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('hidden'));
       document.querySelectorAll('.bin img').forEach(img => {
         img.style.cursor = 'pointer';
@@ -204,7 +211,11 @@
     } else {
       adminMode = false;
       adminBtn.textContent = "Mode Admin";
-      addBinBtn.classList.add('hidden');
+
+      // Cacher les boutons quand on quitte le mode admin
+      exportBtn.classList.remove('visible');
+      addBinBtn.classList.remove('visible');
+
       document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('hidden'));
       document.querySelectorAll('.bin img').forEach(img => {
         img.style.cursor = 'default';
