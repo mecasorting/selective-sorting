@@ -1,1 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Tri Sélectif - Poubelles protégées par mot de passe</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  #addBinBtn {
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #binsList {
+    max-width: 600px;
+    margin: auto;
+  }
+  .binItem {
+    background: white;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 0 6px #ccc;
+    user-select: none;
+  }
+  .binItem:hover {
+    background: #e0f7fa;
+  }
+  #binDetails {
+    max-width: 600px;
+    margin: 20px auto 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 0 10px #aaa;
+    display: none;
+    flex-direction: column;
+  }
+  #binDetails h2 {
+    margin-top: 0;
+  }
+  #itemsList {
+    list-style: none;
+    padding-left: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    background: #fafafa;
+  }
+  #itemsList li {
+    padding: 6px 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #itemsList li:last-child {
+    border-bottom: none;
+  }
+  #itemsList li button {
+    background: #e57373;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    padding: 3px 7px;
+    cursor: pointer;
+  }
+  #addItemForm {
+    display: flex;
+    gap: 10px;
+  }
+  #addItemForm input[type="text"] {
+    flex-grow: 1;
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  #addItemForm button {
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #backBtn {
+    margin-top: 15px;
+    padding: 8px 15px;
+    cursor: pointer;
+    align-self: flex-start;
+    background: #90caf9;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+  }
+  #passwordPrompt {
+    margin-bottom: 15px;
+  }
+  #passwordPrompt input {
+    padding: 8px;
+    font-size: 14px;
+    width: calc(100% - 100px);
+    margin-right: 10px;
+  }
+  #passwordPrompt button {
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #errorMsg {
+    color: red;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Tri Sélectif - Poubelles protégées</h1>
+
+<button id="addBinBtn">Ajouter une poubelle</button>
+
+<div id="binsList"></div>
+
+<div id="binDetails">
+  <h2 id="binTitle"></h2>
+  
+  <div id="passwordPrompt">
+    <input type="password" id="passwordInput" placeholder="Entrez le mot de passe" />
+    <button id="validatePasswordBtn">Valider</button>
+    <div id="errorMsg"></div>
+  </div>
+  
+  <ul id="itemsList"></ul>
+  
+  <form id="addItemForm" style="display:none;">
+    <input type="text" id="newItemInput" placeholder="Ajouter un objet à jeter" required />
+    <button type="submit">Ajouter</button>
+  </form>
+  
+  <button id="backBtn">Retour à la liste des poubelles</button>
+</div>
+
+<script>
+  const addBinBtn = document.getElementById('addBinBtn');
+  const binsList = document.getElementById('binsList');
+  const binDetails = document.getElementById('binDetails');
+  const binTitle = document.getElementById('binTitle');
+  const passwordPrompt = document.getElementById('passwordPrompt');
+  const passwordInput = document.getElementById('passwordInput');
+  const validatePasswordBtn = document.getElementById('validatePasswordBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const itemsList = document.getElementById('itemsList');
+  const addItemForm = document.getElementById('addItemForm');
+  const newItemInput = document.getElementById('newItemInput');
+  const backBtn = document.getElementById('backBtn');
+
+  // Stockage des poubelles {id, name, password, items[]}
+  const bins = [];
+  let currentBinId = null;
+
+  // Affiche la liste des poubelles (uniquement noms)
+  function renderBinsList() {
+    binsList.innerHTML = '';
+    bins.forEach(bin => {
+      const div = document.createElement('div');
+      div.className = 'binItem';
+      div.textContent = bin.name;
+      div.dataset.id = bin.id;
+      div.addEventListener('click', () => {
+        showPasswordPrompt(bin.id);
+      });
+      binsList.appendChild(div);
+    });
+    binDetails.style.display = 'none';
+    binsList.style.display = 'block';
+  }
+
+  // Affiche la demande de mot de passe pour une poubelle
+  function showPasswordPrompt(binId) {
+    currentBinId = binId;
+    const bin = bins.find(b => b.id === binId);
+    binTitle.textContent = bin.name;
+    passwordInput.value = '';
+    errorMsg.textContent = '';
+    passwordPrompt.style.display = 'flex';
+    addItemForm.style.display = 'none';
+    itemsList.innerHTML = '';
+    binsList.style.display = 'none';
+    binDetails.style.display = 'flex';
+  }
+
+  // Affiche la liste et formulaire si mdp ok
+  function showBinContent(bin) {
+    passwordPrompt.style.display = 'none';
+    addItemForm.style.display = 'flex';
+    itemsList.innerHTML = '';
+    bin.items.forEach(item => {
+      addItemToList(item);
+    });
+  }
+
+  // Ajoute un élément à la liste visuelle avec bouton suppression
+  function addItemToList(itemText) {
+    const li = document.createElement('li');
+    li.textContent = itemText;
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '×';
+    delBtn.title = "Supprimer";
+    delBtn.addEventListener('click', () => {
+      const bin = bins.find(b => b.id === currentBinId);
+      bin.items = bin.items.filter(i => i !== itemText);
+      li.remove();
+    });
+
+    li.appendChild(delBtn);
+    itemsList.appendChild(li);
+  }
+
+  // Gestion bouton valider mot de passe
+  validatePasswordBtn.addEventListener('click', () => {
+    const bin = bins.find(b => b.id === currentBinId);
+    if (passwordInput.value === bin.password) {
+      showBinContent(bin);
+    } else {
+      errorMsg.textContent = 'Mot de passe incorrect';
+    }
+  });
+
+  // Gestion ajout objet
+  addItemForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = newItemInput.value.trim();
+    if (val === '') return;
+    const bin = bins.find(b => b.id === currentBinId);
+    bin.items.push(val);
+    addItemToList(val);
+    newItemInput.value = '';
+    newItemInput.focus();
+  });
+
+  // Retour à la liste poubelles
+  backBtn.addEventListener('click', () => {
+    currentBinId = null;
+    renderBinsList();
+  });
+
+  // Ajouter une nouvelle poubelle
+  addBinBtn.addEventListener('click', () => {
+    const name = prompt('Nom de la poubelle :');
+    if (!name || name.trim() === '') {
+      alert('Nom invalide');
+      return;
+    }
+    const password = prompt('Mot de passe pour cette poubelle :');
+    if (!password || password.trim() === '') {
+      alert('Mot de passe invalide');
+      return;
+    }
+    const id = bins.length > 0 ? bins[bins.length -1].id + 1 : 1;
+    bins.push({id, name: name.trim(), password: password.trim(), items: []});
+    renderBinsList();
+  });
+
+  // Initial affichage
+  renderBinsList();
+</script>
+
+</body>
+</html>
 
