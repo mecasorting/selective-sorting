@@ -102,6 +102,53 @@
     background: rgba(0,0,0,0.5);
     z-index: 998;
   }
+
+  /* Popup modale mot de passe */
+  #passwordModal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 25px 30px;
+    box-shadow: 0 0 15px #0008;
+    border-radius: 10px;
+    z-index: 1000;
+    width: 320px;
+  }
+  #passwordModal.hidden {
+    display: none;
+  }
+  #passwordModal label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+  #passwordModal input[type="password"] {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 1em;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+  }
+  #passwordModal button {
+    padding: 8px 16px;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+  }
+  #passwordModal #passwordSubmit {
+    background-color: #4caf50;
+    color: white;
+    margin-right: 10px;
+  }
+  #passwordModal #passwordCancel {
+    background-color: #f44336;
+    color: white;
+  }
+
 </style>
 </head>
 <body>
@@ -173,6 +220,16 @@
   </div>
 </div>
 
+<!-- Popup modale mot de passe -->
+<div id="passwordModal" class="hidden">
+  <label for="adminPasswordInput">Mot de passe admin :</label>
+  <input type="password" id="adminPasswordInput" placeholder="Saisissez le mot de passe" />
+  <div>
+    <button id="passwordSubmit">Valider</button>
+    <button id="passwordCancel">Annuler</button>
+  </div>
+</div>
+
 <script>
 (() => {
   const adminPassword = "secret123"; // Change ton mdp ici !
@@ -189,46 +246,84 @@
   const saveImageBtn = document.getElementById('saveImageBtn');
   const cancelImageBtn = document.getElementById('cancelImageBtn');
 
-  // Fonction pour activer/désactiver mode admin
-  function toggleAdminMode() {
+  const passwordModal = document.getElementById('passwordModal');
+  const adminPasswordInput = document.getElementById('adminPasswordInput');
+  const passwordSubmit = document.getElementById('passwordSubmit');
+  const passwordCancel = document.getElementById('passwordCancel');
+
+  // Initial setup: cacher boutons export et add bin
+  exportBtn.classList.remove('visible');
+  addBinBtn.classList.remove('visible');
+  document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('hidden'));
+
+  // Ouvre la modale mot de passe
+  function openPasswordModal() {
+    adminPasswordInput.value = "";
+    passwordModal.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    adminPasswordInput.focus();
+  }
+
+  // Ferme la modale mot de passe
+  function closePasswordModal() {
+    passwordModal.classList.add('hidden');
+    overlay.classList.add('hidden');
+  }
+
+  // Gérer clic sur bouton mode admin
+  adminBtn.addEventListener('click', () => {
     if (!adminMode) {
-      const pwd = prompt("Entrez le mot de passe admin :");
-      if (pwd !== adminPassword) {
-        alert("Mot de passe incorrect !");
-        return;
-      }
-      adminMode = true;
-      adminBtn.textContent = "Quitter mode Admin";
-
-      // Afficher les boutons uniquement en mode admin
-      exportBtn.classList.add('visible');
-      addBinBtn.classList.add('visible');
-
-      document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('hidden'));
-      document.querySelectorAll('.bin img').forEach(img => {
-        img.style.cursor = 'pointer';
-      });
+      openPasswordModal();
     } else {
+      // Quitter mode admin
       adminMode = false;
       adminBtn.textContent = "Mode Admin";
-
-      // Cacher les boutons quand on quitte le mode admin
       exportBtn.classList.remove('visible');
       addBinBtn.classList.remove('visible');
-
       document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('hidden'));
       document.querySelectorAll('.bin img').forEach(img => {
         img.style.cursor = 'default';
       });
       hideImagePrompt();
     }
-  }
+  });
 
-  adminBtn.addEventListener('click', toggleAdminMode);
+  // Validation mdp
+  passwordSubmit.addEventListener('click', () => {
+    const val = adminPasswordInput.value;
+    if (val === adminPassword) {
+      adminMode = true;
+      adminBtn.textContent = "Quitter mode Admin";
+      exportBtn.classList.add('visible');
+      addBinBtn.classList.add('visible');
+      document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('hidden'));
+      document.querySelectorAll('.bin img').forEach(img => {
+        img.style.cursor = 'pointer';
+      });
+      closePasswordModal();
+    } else {
+      alert("Mot de passe incorrect !");
+      adminPasswordInput.value = "";
+      adminPasswordInput.focus();
+    }
+  });
 
-  // Fonction pour ajouter un objet
+  // Annuler mdp
+  passwordCancel.addEventListener('click', () => {
+    closePasswordModal();
+  });
+
+  // Fermer modale si clic hors
+  overlay.addEventListener('click', () => {
+    if (!passwordModal.classList.contains('hidden')) closePasswordModal();
+    if (!imagePrompt.classList.contains('hidden')) hideImagePrompt();
+  });
+
+  // Ajouter un objet dans liste
   function setupAddItemForms() {
     binsContainer.querySelectorAll('.add-item-form').forEach(form => {
+      // Supprimer anciens handlers pour éviter doublons
+      form.onsubmit = null;
       form.addEventListener('submit', e => {
         e.preventDefault();
         const input = form.querySelector('input');
@@ -242,10 +337,9 @@
       });
     });
   }
-
   setupAddItemForms();
 
-  // Changer image au clic si mode admin
+  // Changer image si mode admin
   binsContainer.addEventListener('click', e => {
     if (!adminMode) return;
     if (e.target.tagName === 'IMG' && e.target.closest('.bin')) {
@@ -279,7 +373,6 @@
   });
 
   cancelImageBtn.addEventListener('click', hideImagePrompt);
-  overlay.addEventListener('click', hideImagePrompt);
 
   // Ajouter une nouvelle poubelle
   addBinBtn.addEventListener('click', () => {
@@ -288,7 +381,6 @@
     if (!name) return alert("Nom obligatoire !");
     const imageUrl = prompt("URL de l'image pour la poubelle :\n(Laisse vide pour image par défaut)");
 
-    // Crée l'élément poubelle
     const binDiv = document.createElement('div');
     binDiv.className = 'bin';
     binDiv.setAttribute('data-name', name);
