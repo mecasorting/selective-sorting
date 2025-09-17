@@ -59,20 +59,19 @@
     padding: 6px 12px;
     cursor: pointer;
   }
-  #exportBtn, #addBinBtn {
+  #exportBtn, #addBinBtn, #importBtn {
     display: none;
     margin: 10px 10px 0 0;
     padding: 10px 20px;
     font-size: 16px;
-    background: #4caf50;
-    color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    color: white;
   }
-  #addBinBtn {
-    background: #2196f3;
-  }
+  #exportBtn { background: #4caf50; }
+  #addBinBtn { background: #2196f3; }
+  #importBtn { background: #ff9800; }
   #adminBtn {
     margin: 10px 10px 0 0;
     padding: 10px 20px;
@@ -207,7 +206,9 @@
 
 <button id="exportBtn">Exporter le site complet</button>
 <button id="addBinBtn">Ajouter une poubelle</button>
+<button id="importBtn">Importer un fichier</button>
 <button id="adminBtn">Mode Admin</button>
+<input type="file" id="importFileInput" accept=".html" style="display:none" />
 
 <!-- Modal Mot de passe -->
 <div id="overlay"></div>
@@ -241,6 +242,8 @@
   const exportBtn = document.getElementById('exportBtn');
   const adminBtn = document.getElementById('adminBtn');
   const addBinBtn = document.getElementById('addBinBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFileInput = document.getElementById('importFileInput');
 
   const passwordModal = document.getElementById('passwordModal');
   const overlay = document.getElementById('overlay');
@@ -258,6 +261,7 @@
     if(adminMode) {
       exportBtn.style.display = 'inline-block';
       addBinBtn.style.display = 'inline-block';
+      importBtn.style.display = 'inline-block';
       adminBtn.textContent = 'Quitter mode Admin';
       // Afficher formulaires ajout d'objet et changer curseur image
       document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('visible'));
@@ -267,6 +271,7 @@
     } else {
       exportBtn.style.display = 'none';
       addBinBtn.style.display = 'none';
+      importBtn.style.display = 'inline-block';
       adminBtn.textContent = 'Mode Admin';
       // Cacher formulaires ajout d'objet et remettre curseur normal
       document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('visible'));
@@ -368,179 +373,116 @@
     overlay.style.display = 'none';
     currentImageToChange = null;
   }
-
   saveImageBtn.addEventListener('click', () => {
-    const newUrl = imageUrlInput.value.trim();
-    if (!newUrl) {
-      alert("URL invalide !");
-      return;
-    }
-    if (currentImageToChange) {
-      currentImageToChange.src = newUrl;
+    const url = imageUrlInput.value.trim();
+    if(url && currentImageToChange) {
+      currentImageToChange.src = url;
     }
     hideImagePrompt();
   });
-
-  cancelImageBtn.addEventListener('click', hideImagePrompt);
+  cancelImageBtn.addEventListener('click', () => {
+    hideImagePrompt();
+  });
 
   // Ajouter une nouvelle poubelle
   addBinBtn.addEventListener('click', () => {
-    if (!adminMode) return;
-    const name = prompt("Nom de la nouvelle poubelle :");
-    if (!name) return alert("Nom obligatoire !");
-    const imageUrl = prompt("URL de l'image pour la poubelle :\n(Laisse vide pour image par défaut)");
+    const binName = prompt("Nom de la nouvelle poubelle ?");
+    if(!binName) return;
+    const imgUrl = prompt("URL de l'image pour cette poubelle ?");
+    if(!imgUrl) return;
 
-    // Crée l'élément poubelle
-    const binDiv = document.createElement('div');
-    binDiv.className = 'bin';
-    binDiv.setAttribute('data-name', name);
+    // Créer nouvelle poubelle
+    const div = document.createElement('div');
+    div.className = 'bin';
+    div.setAttribute('data-name', binName);
+    div.innerHTML = `
+      <img src="${imgUrl}" alt="${binName}" title="Cliquez pour changer l'image" />
+      <div class="bin-content">
+        <h2>${binName}</h2>
+        <ul class="item-list"></ul>
+        <form class="add-item-form visible">
+          <input type="text" placeholder="Ajouter un objet..." required />
+          <button type="submit">Ajouter</button>
+        </form>
+      </div>
+    `;
+    binsContainer.appendChild(div);
 
-    const img = document.createElement('img');
-    img.alt = name;
-    img.title = "Cliquez pour changer l'image";
-    img.src = imageUrl && imageUrl.trim() !== '' ? imageUrl.trim() : 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=80&q=80';
+    // Ajouter event formulaire ajout objet
+    div.querySelector('form.add-item-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const input = e.target.querySelector('input');
+      const val = input.value.trim();
+      if(!val) return;
+      const ul = e.target.parentElement.querySelector('.item-list');
+      const li = document.createElement('li');
+      li.textContent = val;
+      ul.appendChild(li);
+      input.value = '';
+    });
 
-    const binContent = document.createElement('div');
-    binContent.className = 'bin-content';
-
-    const h2 = document.createElement('h2');
-    h2.textContent = name;
-
-    const ul = document.createElement('ul');
-    ul.className = 'item-list';
-
-    const form = document.createElement('form');
-    form.className = 'add-item-form visible';
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'Ajouter un objet...';
-    input.required = true;
-
-    const button = document.createElement('button');
-    button.type = 'submit';
-    button.textContent = 'Ajouter';
-
-    form.appendChild(input);
-    form.appendChild(button);
-
-    binContent.appendChild(h2);
-    binContent.appendChild(ul);
-    binContent.appendChild(form);
-
-    binDiv.appendChild(img);
-    binDiv.appendChild(binContent);
-
-    binsContainer.appendChild(binDiv);
-
-    setupAddItemForms();
+    // L'image est clickable directement (car admin mode)
+    div.querySelector('img').style.cursor = 'pointer';
   });
 
-  // Exporter le site complet (tout le HTML)
+  // Exporter le site complet (HTML + CSS + JS + contenu dynamique)
   exportBtn.addEventListener('click', () => {
-    // Récupérer le HTML des poubelles (sans les forms cachés)
-    const binsHTML = Array.from(binsContainer.children).map(bin => {
-      // Cloner le node pour modifier temporairement
-      const clone = bin.cloneNode(true);
+    // Construire le HTML exporté
+    const doctype = '<!DOCTYPE html>\n';
+    const html = document.documentElement.outerHTML;
 
-      // On masque les formulaires si admin mode off dans l’export
-      if (!adminMode) {
-        clone.querySelectorAll('.add-item-form').forEach(f => f.style.display = 'none');
-      } else {
-        // Sinon afficher form dans export
-        clone.querySelectorAll('.add-item-form').forEach(f => f.style.display = 'flex');
-      }
-
-      // Corriger les images curseurs
-      const imgs = clone.querySelectorAll('img');
-      imgs.forEach(img => {
-        img.style.cursor = adminMode ? 'pointer' : 'default';
-      });
-
-      return clone.outerHTML;
-    }).join('\n');
-
-    // Préparer le HTML complet exporté
-    const exportHtml = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8" />
-<title>Tri Sélectif Exporté</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    padding: 20px;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  .bin {
-    background: white;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    border-radius: 6px;
-    box-shadow: 0 0 5px #ccc;
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  .bin img {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 8px;
-    cursor: default;
-  }
-  .bin-content {
-    flex-grow: 1;
-  }
-  .bin h2 {
-    margin: 0 0 10px;
-  }
-  ul {
-    padding-left: 20px;
-    margin: 0 0 15px;
-  }
-  li {
-    margin-bottom: 5px;
-  }
-  form.add-item-form {
-    display: none;
-    gap: 8px;
-  }
-  form.add-item-form.visible {
-    display: flex;
-  }
-  form.add-item-form input[type="text"] {
-    flex-grow: 1;
-    padding: 6px 8px;
-  }
-  form.add-item-form button {
-    padding: 6px 12px;
-    cursor: pointer;
-  }
-</style>
-</head>
-<body>
-<h1>Tri Sélectif</h1>
-${binsHTML}
-</body>
-</html>`;
-
-    const blob = new Blob([exportHtml], {type: "text/html;charset=utf-8"});
+    // Créer blob avec le HTML complet
+    const blob = new Blob([doctype + html], {type: 'text/html'});
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
-    a.download = "tri-selectif-export.html";
+    a.download = 'tri-selectif-export.html';
     a.click();
-
     URL.revokeObjectURL(url);
   });
 
+  // Importer un fichier HTML exporté
+  importBtn.addEventListener('click', () => {
+    importFileInput.click();
+  });
+
+  importFileInput.addEventListener('change', e => {
+    const file = importFileInput.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const text = ev.target.result;
+
+      // Parse HTML du fichier importé
+      const parser = new DOMParser();
+      const importedDoc = parser.parseFromString(text, 'text/html');
+
+      // Récupérer les poubelles du fichier importé
+      const importedBins = importedDoc.getElementById('binsContainer');
+      if(!importedBins) {
+        alert('Fichier invalide : pas de conteneur de poubelles trouvé.');
+        return;
+      }
+
+      // Remplacer les poubelles actuelles par celles importées
+      binsContainer.innerHTML = importedBins.innerHTML;
+
+      // Réinitialiser admin mode
+      adminMode = false;
+      updateUI();
+
+      // Reconnecter les événements sur nouveaux éléments
+      setupAddItemForms();
+
+      alert('Import réussi ! Mode admin désactivé.');
+    };
+    reader.readAsText(file);
+    importFileInput.value = ''; // reset input
+  });
+
   updateUI();
+
 })();
 </script>
 
