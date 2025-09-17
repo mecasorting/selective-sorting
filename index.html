@@ -45,8 +45,11 @@
     margin-bottom: 5px;
   }
   form.add-item-form {
-    display: flex;
+    display: none;
     gap: 8px;
+  }
+  form.add-item-form.visible {
+    display: flex;
   }
   form.add-item-form input[type="text"] {
     flex-grow: 1;
@@ -57,7 +60,7 @@
     cursor: pointer;
   }
   #exportBtn, #addBinBtn {
-    display: none; /* cachés par défaut */
+    display: none;
     margin: 10px 10px 0 0;
     padding: 10px 20px;
     font-size: 16px;
@@ -70,22 +73,71 @@
   #addBinBtn {
     background: #2196f3;
   }
-  #exportBtn.visible, #addBinBtn.visible {
-    display: inline-block; /* affichés quand la classe visible est ajoutée */
+  #adminBtn {
+    margin: 10px 10px 0 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
   }
-  .hidden {
+  /* Popup modale mot de passe */
+  #passwordModal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px 30px;
+    box-shadow: 0 0 10px #222;
+    border-radius: 8px;
+    z-index: 1001;
+    display: none;
+    width: 320px;
+  }
+  #passwordModal label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  #passwordModal input {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  #passwordModal button {
+    padding: 8px 16px;
+    margin-right: 8px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  /* Overlay modale */
+  #overlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
     display: none;
   }
-  /* Style du popup changement image */
+  /* Popup changement image */
   #imagePrompt {
     position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     background: white;
-    padding: 20px;
+    padding: 20px 25px;
     box-shadow: 0 0 10px #222;
     border-radius: 8px;
-    z-index: 999;
+    z-index: 1002;
+    display: none;
+    width: 320px;
+  }
+  #imagePrompt label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
   }
   #imagePrompt input {
     width: 100%;
@@ -95,60 +147,8 @@
   #imagePrompt button {
     padding: 6px 12px;
     margin-right: 8px;
-  }
-  #overlay {
-    position: fixed;
-    top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.5);
-    z-index: 998;
-  }
-
-  /* Popup modale mot de passe */
-  #passwordModal {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 25px 30px;
-    box-shadow: 0 0 15px #0008;
-    border-radius: 10px;
-    z-index: 1000;
-    width: 320px;
-  }
-  #passwordModal.hidden {
-    display: none;
-  }
-  #passwordModal label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    font-size: 1.1em;
-  }
-  #passwordModal input[type="password"] {
-    width: 100%;
-    padding: 8px 10px;
-    font-size: 1em;
-    margin-bottom: 15px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-  }
-  #passwordModal button {
-    padding: 8px 16px;
-    font-size: 1em;
     cursor: pointer;
-    border-radius: 6px;
-    border: none;
   }
-  #passwordModal #passwordSubmit {
-    background-color: #4caf50;
-    color: white;
-    margin-right: 10px;
-  }
-  #passwordModal #passwordCancel {
-    background-color: #f44336;
-    color: white;
-  }
-
 </style>
 </head>
 <body>
@@ -165,7 +165,7 @@
         <li>Flacons</li>
         <li>Vases</li>
       </ul>
-      <form class="add-item-form hidden">
+      <form class="add-item-form">
         <input type="text" placeholder="Ajouter un objet..." required />
         <button type="submit">Ajouter</button>
       </form>
@@ -181,7 +181,7 @@
         <li>Sacs plastiques</li>
         <li>Barquettes</li>
       </ul>
-      <form class="add-item-form hidden">
+      <form class="add-item-form">
         <input type="text" placeholder="Ajouter un objet..." required />
         <button type="submit">Ajouter</button>
       </form>
@@ -197,7 +197,7 @@
         <li>Cartons</li>
         <li>Publicités</li>
       </ul>
-      <form class="add-item-form hidden">
+      <form class="add-item-form">
         <input type="text" placeholder="Ajouter un objet..." required />
         <button type="submit">Ajouter</button>
       </form>
@@ -206,27 +206,28 @@
 </div>
 
 <button id="exportBtn">Exporter le site complet</button>
-<button id="adminBtn">Mode Admin</button>
 <button id="addBinBtn">Ajouter une poubelle</button>
+<button id="adminBtn">Mode Admin</button>
+
+<!-- Modal Mot de passe -->
+<div id="overlay"></div>
+
+<div id="passwordModal">
+  <label for="adminPasswordInput">Entrez le mot de passe admin :</label>
+  <input id="adminPasswordInput" type="password" autocomplete="off" />
+  <div>
+    <button id="passwordOkBtn">OK</button>
+    <button id="passwordCancelBtn">Annuler</button>
+  </div>
+</div>
 
 <!-- Popup changement image -->
-<div id="overlay" class="hidden"></div>
-<div id="imagePrompt" class="hidden">
+<div id="imagePrompt">
   <label for="imageUrlInput">Nouvelle URL de l'image :</label>
   <input type="text" id="imageUrlInput" placeholder="https://exemple.com/image.jpg" />
   <div>
     <button id="saveImageBtn">Sauvegarder</button>
     <button id="cancelImageBtn">Annuler</button>
-  </div>
-</div>
-
-<!-- Popup modale mot de passe -->
-<div id="passwordModal" class="hidden">
-  <label for="adminPasswordInput">Mot de passe admin :</label>
-  <input type="password" id="adminPasswordInput" placeholder="Saisissez le mot de passe" />
-  <div>
-    <button id="passwordSubmit">Valider</button>
-    <button id="passwordCancel">Annuler</button>
   </div>
 </div>
 
@@ -240,90 +241,97 @@
   const exportBtn = document.getElementById('exportBtn');
   const adminBtn = document.getElementById('adminBtn');
   const addBinBtn = document.getElementById('addBinBtn');
-  const imagePrompt = document.getElementById('imagePrompt');
+
+  const passwordModal = document.getElementById('passwordModal');
   const overlay = document.getElementById('overlay');
+  const adminPasswordInput = document.getElementById('adminPasswordInput');
+  const passwordOkBtn = document.getElementById('passwordOkBtn');
+  const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+
+  const imagePrompt = document.getElementById('imagePrompt');
   const imageUrlInput = document.getElementById('imageUrlInput');
   const saveImageBtn = document.getElementById('saveImageBtn');
   const cancelImageBtn = document.getElementById('cancelImageBtn');
 
-  const passwordModal = document.getElementById('passwordModal');
-  const adminPasswordInput = document.getElementById('adminPasswordInput');
-  const passwordSubmit = document.getElementById('passwordSubmit');
-  const passwordCancel = document.getElementById('passwordCancel');
-
-  // Initial setup: cacher boutons export et add bin
-  exportBtn.classList.remove('visible');
-  addBinBtn.classList.remove('visible');
-  document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('hidden'));
-
-  // Ouvre la modale mot de passe
-  function openPasswordModal() {
-    adminPasswordInput.value = "";
-    passwordModal.classList.remove('hidden');
-    overlay.classList.remove('hidden');
-    adminPasswordInput.focus();
-  }
-
-  // Ferme la modale mot de passe
-  function closePasswordModal() {
-    passwordModal.classList.add('hidden');
-    overlay.classList.add('hidden');
-  }
-
-  // Gérer clic sur bouton mode admin
-  adminBtn.addEventListener('click', () => {
-    if (!adminMode) {
-      openPasswordModal();
+  // Au départ on masque les boutons admin
+  function updateUI() {
+    if(adminMode) {
+      exportBtn.style.display = 'inline-block';
+      addBinBtn.style.display = 'inline-block';
+      adminBtn.textContent = 'Quitter mode Admin';
+      // Afficher formulaires ajout d'objet et changer curseur image
+      document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('visible'));
+      document.querySelectorAll('.bin img').forEach(img => {
+        img.style.cursor = 'pointer';
+      });
     } else {
-      // Quitter mode admin
-      adminMode = false;
-      adminBtn.textContent = "Mode Admin";
-      exportBtn.classList.remove('visible');
-      addBinBtn.classList.remove('visible');
-      document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('hidden'));
+      exportBtn.style.display = 'none';
+      addBinBtn.style.display = 'none';
+      adminBtn.textContent = 'Mode Admin';
+      // Cacher formulaires ajout d'objet et remettre curseur normal
+      document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('visible'));
       document.querySelectorAll('.bin img').forEach(img => {
         img.style.cursor = 'default';
       });
       hideImagePrompt();
     }
-  });
+  }
 
-  // Validation mdp
-  passwordSubmit.addEventListener('click', () => {
-    const val = adminPasswordInput.value;
-    if (val === adminPassword) {
-      adminMode = true;
-      adminBtn.textContent = "Quitter mode Admin";
-      exportBtn.classList.add('visible');
-      addBinBtn.classList.add('visible');
-      document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('hidden'));
-      document.querySelectorAll('.bin img').forEach(img => {
-        img.style.cursor = 'pointer';
-      });
-      closePasswordModal();
+  // Affiche la modal de mot de passe
+  function showPasswordModal() {
+    passwordModal.style.display = 'block';
+    overlay.style.display = 'block';
+    adminPasswordInput.value = '';
+    adminPasswordInput.focus();
+  }
+  // Cache la modal mot de passe
+  function hidePasswordModal() {
+    passwordModal.style.display = 'none';
+    overlay.style.display = 'none';
+  }
+
+  // Toggle mode admin
+  function toggleAdminMode() {
+    if (!adminMode) {
+      showPasswordModal();
     } else {
-      alert("Mot de passe incorrect !");
-      adminPasswordInput.value = "";
+      adminMode = false;
+      updateUI();
+    }
+  }
+
+  adminBtn.addEventListener('click', toggleAdminMode);
+
+  passwordOkBtn.addEventListener('click', () => {
+    const val = adminPasswordInput.value.trim();
+    if(val === adminPassword) {
+      adminMode = true;
+      updateUI();
+      hidePasswordModal();
+    } else {
+      alert('Mot de passe incorrect !');
+      adminPasswordInput.value = '';
       adminPasswordInput.focus();
     }
   });
 
-  // Annuler mdp
-  passwordCancel.addEventListener('click', () => {
-    closePasswordModal();
+  passwordCancelBtn.addEventListener('click', () => {
+    hidePasswordModal();
   });
 
-  // Fermer modale si clic hors
   overlay.addEventListener('click', () => {
-    if (!passwordModal.classList.contains('hidden')) closePasswordModal();
-    if (!imagePrompt.classList.contains('hidden')) hideImagePrompt();
+    // Si modal ouverte, on la ferme au clic sur overlay
+    if(passwordModal.style.display === 'block') {
+      hidePasswordModal();
+    }
+    if(imagePrompt.style.display === 'block') {
+      hideImagePrompt();
+    }
   });
 
-  // Ajouter un objet dans liste
+  // Formulaires ajout objets dans poubelles
   function setupAddItemForms() {
     binsContainer.querySelectorAll('.add-item-form').forEach(form => {
-      // Supprimer anciens handlers pour éviter doublons
-      form.onsubmit = null;
       form.addEventListener('submit', e => {
         e.preventDefault();
         const input = form.querySelector('input');
@@ -337,9 +345,10 @@
       });
     });
   }
+
   setupAddItemForms();
 
-  // Changer image si mode admin
+  // Changer image au clic si mode admin
   binsContainer.addEventListener('click', e => {
     if (!adminMode) return;
     if (e.target.tagName === 'IMG' && e.target.closest('.bin')) {
@@ -350,13 +359,13 @@
 
   function showImagePrompt(currentUrl) {
     imageUrlInput.value = currentUrl;
-    imagePrompt.classList.remove('hidden');
-    overlay.classList.remove('hidden');
+    imagePrompt.style.display = 'block';
+    overlay.style.display = 'block';
     imageUrlInput.focus();
   }
   function hideImagePrompt() {
-    imagePrompt.classList.add('hidden');
-    overlay.classList.add('hidden');
+    imagePrompt.style.display = 'none';
+    overlay.style.display = 'none';
     currentImageToChange = null;
   }
 
@@ -381,6 +390,7 @@
     if (!name) return alert("Nom obligatoire !");
     const imageUrl = prompt("URL de l'image pour la poubelle :\n(Laisse vide pour image par défaut)");
 
+    // Crée l'élément poubelle
     const binDiv = document.createElement('div');
     binDiv.className = 'bin';
     binDiv.setAttribute('data-name', name);
@@ -400,7 +410,7 @@
     ul.className = 'item-list';
 
     const form = document.createElement('form');
-    form.className = 'add-item-form';
+    form.className = 'add-item-form visible';
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -428,7 +438,30 @@
 
   // Exporter le site complet (tout le HTML)
   exportBtn.addEventListener('click', () => {
-    const htmlContent = `<!DOCTYPE html>
+    // Récupérer le HTML des poubelles (sans les forms cachés)
+    const binsHTML = Array.from(binsContainer.children).map(bin => {
+      // Cloner le node pour modifier temporairement
+      const clone = bin.cloneNode(true);
+
+      // On masque les formulaires si admin mode off dans l’export
+      if (!adminMode) {
+        clone.querySelectorAll('.add-item-form').forEach(f => f.style.display = 'none');
+      } else {
+        // Sinon afficher form dans export
+        clone.querySelectorAll('.add-item-form').forEach(f => f.style.display = 'flex');
+      }
+
+      // Corriger les images curseurs
+      const imgs = clone.querySelectorAll('img');
+      imgs.forEach(img => {
+        img.style.cursor = adminMode ? 'pointer' : 'default';
+      });
+
+      return clone.outerHTML;
+    }).join('\n');
+
+    // Préparer le HTML complet exporté
+    const exportHtml = `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
@@ -458,6 +491,7 @@
     height: 80px;
     object-fit: cover;
     border-radius: 8px;
+    cursor: default;
   }
   .bin-content {
     flex-grow: 1;
@@ -472,26 +506,41 @@
   li {
     margin-bottom: 5px;
   }
+  form.add-item-form {
+    display: none;
+    gap: 8px;
+  }
+  form.add-item-form.visible {
+    display: flex;
+  }
+  form.add-item-form input[type="text"] {
+    flex-grow: 1;
+    padding: 6px 8px;
+  }
+  form.add-item-form button {
+    padding: 6px 12px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 <h1>Tri Sélectif</h1>
-${binsContainer.innerHTML}
+${binsHTML}
 </body>
 </html>`;
 
-    const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
+    const blob = new Blob([exportHtml], {type: "text/html;charset=utf-8"});
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
     a.download = "tri-selectif-export.html";
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+
     URL.revokeObjectURL(url);
   });
 
+  updateUI();
 })();
 </script>
 
