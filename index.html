@@ -1,215 +1,395 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Tri Sélectif avec Export / Import</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .bin {
-      background: white;
-      padding: 15px 20px;
-      margin-bottom: 25px;
-      border-radius: 6px;
-      box-shadow: 0 0 5px #ccc;
-      display: flex;
-      align-items: flex-start;
-      gap: 15px;
-    }
-    .bin img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-    .bin-content {
-      flex-grow: 1;
-    }
-    .bin h2 {
-      margin: 0 0 10px;
-    }
-    ul {
-      padding-left: 20px;
-      margin: 0 0 15px;
-    }
-    li {
-      margin-bottom: 5px;
-    }
-    form.add-item-form {
-      display: flex;
-      gap: 8px;
-    }
-    form.add-item-form input[type="text"] {
-      flex-grow: 1;
-      padding: 6px 8px;
-    }
-    form.add-item-form button {
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-    #exportBtn, #importBtn {
-      display: inline-block;
-      margin: 15px 10px 0;
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    #importBtn {
-      background: #2196f3;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Tri Sélectif - Mode Admin</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .bin {
+    background: white;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    border-radius: 6px;
+    box-shadow: 0 0 5px #ccc;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    position: relative;
+  }
+  .bin img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .bin-content {
+    flex-grow: 1;
+  }
+  .bin h2 {
+    margin: 0 0 10px;
+  }
+  ul {
+    padding-left: 20px;
+    margin: 0 0 15px;
+  }
+  li {
+    margin-bottom: 5px;
+  }
+  form.add-item-form {
+    display: flex;
+    gap: 8px;
+  }
+  form.add-item-form input[type="text"] {
+    flex-grow: 1;
+    padding: 6px 8px;
+  }
+  form.add-item-form button {
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  #exportBtn, #addBinBtn {
+    display: inline-block;
+    margin: 10px 10px 0 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #addBinBtn {
+    background: #2196f3;
+  }
+  .hidden {
+    display: none;
+  }
+  /* Style du popup changement image */
+  #imagePrompt {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    box-shadow: 0 0 10px #222;
+    border-radius: 8px;
+    z-index: 999;
+  }
+  #imagePrompt input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 6px;
+  }
+  #imagePrompt button {
+    padding: 6px 12px;
+    margin-right: 8px;
+  }
+  #overlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+  }
+</style>
 </head>
 <body>
 
 <h1>Tri Sélectif</h1>
 
-<div class="bin" data-name="Verre">
-  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=80&q=80" alt="Verre">
-  <div class="bin-content">
-    <h2>Verre</h2>
-    <ul class="item-list">
-      <li>Bouteilles</li>
-      <li>Flacons</li>
-      <li>Vases</li>
-    </ul>
-    <form class="add-item-form">
-      <input type="text" placeholder="Ajouter un objet..." required />
-      <button type="submit">Ajouter</button>
-    </form>
+<div id="binsContainer">
+  <div class="bin" data-name="Verre">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=80&q=80" alt="Verre" title="Cliquez pour changer l'image" />
+    <div class="bin-content">
+      <h2>Verre</h2>
+      <ul class="item-list">
+        <li>Bouteilles</li>
+        <li>Flacons</li>
+        <li>Vases</li>
+      </ul>
+      <form class="add-item-form hidden">
+        <input type="text" placeholder="Ajouter un objet..." required />
+        <button type="submit">Ajouter</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bin" data-name="Plastique">
+    <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=80&q=80" alt="Plastique" title="Cliquez pour changer l'image" />
+    <div class="bin-content">
+      <h2>Plastique</h2>
+      <ul class="item-list">
+        <li>Bidons</li>
+        <li>Sacs plastiques</li>
+        <li>Barquettes</li>
+      </ul>
+      <form class="add-item-form hidden">
+        <input type="text" placeholder="Ajouter un objet..." required />
+        <button type="submit">Ajouter</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bin" data-name="Papier">
+    <img src="https://images.unsplash.com/photo-1518976024611-26a7a5f52db6?auto=format&fit=crop&w=80&q=80" alt="Papier" title="Cliquez pour changer l'image" />
+    <div class="bin-content">
+      <h2>Papier</h2>
+      <ul class="item-list">
+        <li>Journaux</li>
+        <li>Cartons</li>
+        <li>Publicités</li>
+      </ul>
+      <form class="add-item-form hidden">
+        <input type="text" placeholder="Ajouter un objet..." required />
+        <button type="submit">Ajouter</button>
+      </form>
+    </div>
   </div>
 </div>
 
-<div class="bin" data-name="Plastique">
-  <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=80&q=80" alt="Plastique">
-  <div class="bin-content">
-    <h2>Plastique</h2>
-    <ul class="item-list">
-      <li>Bidons</li>
-      <li>Sacs plastiques</li>
-      <li>Barquettes</li>
-    </ul>
-    <form class="add-item-form">
-      <input type="text" placeholder="Ajouter un objet..." required />
-      <button type="submit">Ajouter</button>
-    </form>
+<button id="exportBtn">Exporter le site complet</button>
+<button id="adminBtn">Mode Admin</button>
+<button id="addBinBtn" class="hidden">Ajouter une poubelle</button>
+
+<!-- Popup changement image -->
+<div id="overlay" class="hidden"></div>
+<div id="imagePrompt" class="hidden">
+  <label for="imageUrlInput">Nouvelle URL de l'image :</label>
+  <input type="text" id="imageUrlInput" placeholder="https://exemple.com/image.jpg" />
+  <div>
+    <button id="saveImageBtn">Sauvegarder</button>
+    <button id="cancelImageBtn">Annuler</button>
   </div>
 </div>
-
-<div class="bin" data-name="Papier">
-  <img src="https://images.unsplash.com/photo-1518976024611-26a7a5f52db6?auto=format&fit=crop&w=80&q=80" alt="Papier">
-  <div class="bin-content">
-    <h2>Papier</h2>
-    <ul class="item-list">
-      <li>Journaux</li>
-      <li>Cartons</li>
-      <li>Publicités</li>
-    </ul>
-    <form class="add-item-form">
-      <input type="text" placeholder="Ajouter un objet..." required />
-      <button type="submit">Ajouter</button>
-    </form>
-  </div>
-</div>
-
-<button id="exportBtn">Exporter les données</button>
-<button id="importBtn">Importer les données</button>
-<input type="file" id="fileInput" accept=".json" style="display:none" />
 
 <script>
-  // Ajout d'objets aux listes
-  document.querySelectorAll('.add-item-form').forEach(form => {
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const input = form.querySelector('input');
-      const text = input.value.trim();
-      if (!text) return;
+(() => {
+  const adminPassword = "secret123"; // Change ton mdp ici !
+  let adminMode = false;
+  let currentImageToChange = null;
 
-      const ul = form.parentElement.querySelector('.item-list');
-      const li = document.createElement('li');
-      li.textContent = text;
-      ul.appendChild(li);
-      input.value = '';
+  const binsContainer = document.getElementById('binsContainer');
+  const exportBtn = document.getElementById('exportBtn');
+  const adminBtn = document.getElementById('adminBtn');
+  const addBinBtn = document.getElementById('addBinBtn');
+  const imagePrompt = document.getElementById('imagePrompt');
+  const overlay = document.getElementById('overlay');
+  const imageUrlInput = document.getElementById('imageUrlInput');
+  const saveImageBtn = document.getElementById('saveImageBtn');
+  const cancelImageBtn = document.getElementById('cancelImageBtn');
+
+  // Fonction pour activer/désactiver mode admin
+  function toggleAdminMode() {
+    if (!adminMode) {
+      const pwd = prompt("Entrez le mot de passe admin :");
+      if (pwd !== adminPassword) {
+        alert("Mot de passe incorrect !");
+        return;
+      }
+      adminMode = true;
+      adminBtn.textContent = "Quitter mode Admin";
+      addBinBtn.classList.remove('hidden');
+      document.querySelectorAll('.add-item-form').forEach(form => form.classList.remove('hidden'));
+      document.querySelectorAll('.bin img').forEach(img => {
+        img.style.cursor = 'pointer';
+      });
+    } else {
+      adminMode = false;
+      adminBtn.textContent = "Mode Admin";
+      addBinBtn.classList.add('hidden');
+      document.querySelectorAll('.add-item-form').forEach(form => form.classList.add('hidden'));
+      document.querySelectorAll('.bin img').forEach(img => {
+        img.style.cursor = 'default';
+      });
+      hideImagePrompt();
+    }
+  }
+
+  adminBtn.addEventListener('click', toggleAdminMode);
+
+  // Fonction pour ajouter un objet
+  function setupAddItemForms() {
+    binsContainer.querySelectorAll('.add-item-form').forEach(form => {
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const input = form.querySelector('input');
+        const val = input.value.trim();
+        if (!val) return;
+        const ul = form.parentElement.querySelector('.item-list');
+        const li = document.createElement('li');
+        li.textContent = val;
+        ul.appendChild(li);
+        input.value = '';
+      });
     });
+  }
+
+  setupAddItemForms();
+
+  // Changer image au clic si mode admin
+  binsContainer.addEventListener('click', e => {
+    if (!adminMode) return;
+    if (e.target.tagName === 'IMG' && e.target.closest('.bin')) {
+      currentImageToChange = e.target;
+      showImagePrompt(currentImageToChange.src);
+    }
   });
 
-  // Export avec mot de passe
-  document.getElementById('exportBtn').addEventListener('click', () => {
-    const password = prompt('Entrez le mot de passe pour exporter :');
-    const correctPassword = 'secret123'; // Modifie ici
+  function showImagePrompt(currentUrl) {
+    imageUrlInput.value = currentUrl;
+    imagePrompt.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    imageUrlInput.focus();
+  }
+  function hideImagePrompt() {
+    imagePrompt.classList.add('hidden');
+    overlay.classList.add('hidden');
+    currentImageToChange = null;
+  }
 
-    if (password !== correctPassword) {
-      alert('Mot de passe incorrect.');
+  saveImageBtn.addEventListener('click', () => {
+    const newUrl = imageUrlInput.value.trim();
+    if (!newUrl) {
+      alert("URL invalide !");
       return;
     }
-
-    const bins = [];
-    document.querySelectorAll('.bin').forEach(bin => {
-      const name = bin.getAttribute('data-name');
-      const items = Array.from(bin.querySelectorAll('.item-list li')).map(li => li.textContent);
-      bins.push({ poubelle: name, objets: items });
-    });
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "tri-selectif.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    if (currentImageToChange) {
+      currentImageToChange.src = newUrl;
+    }
+    hideImagePrompt();
   });
 
-  // Import des données
-  const importBtn = document.getElementById('importBtn');
-  const fileInput = document.getElementById('fileInput');
+  cancelImageBtn.addEventListener('click', hideImagePrompt);
+  overlay.addEventListener('click', hideImagePrompt);
 
-  importBtn.addEventListener('click', () => {
-    fileInput.click();
+  // Ajouter une nouvelle poubelle
+  addBinBtn.addEventListener('click', () => {
+    if (!adminMode) return;
+    const name = prompt("Nom de la nouvelle poubelle :");
+    if (!name) return alert("Nom obligatoire !");
+    const imageUrl = prompt("URL de l'image pour la poubelle :\n(Laisse vide pour image par défaut)");
+
+    // Crée l'élément poubelle
+    const binDiv = document.createElement('div');
+    binDiv.className = 'bin';
+    binDiv.setAttribute('data-name', name);
+
+    const img = document.createElement('img');
+    img.alt = name;
+    img.title = "Cliquez pour changer l'image";
+    img.src = imageUrl && imageUrl.trim() !== '' ? imageUrl.trim() : 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=80&q=80';
+
+    const binContent = document.createElement('div');
+    binContent.className = 'bin-content';
+
+    const h2 = document.createElement('h2');
+    h2.textContent = name;
+
+    const ul = document.createElement('ul');
+    ul.className = 'item-list';
+
+    const form = document.createElement('form');
+    form.className = 'add-item-form';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Ajouter un objet...';
+    input.required = true;
+
+    const button = document.createElement('button');
+    button.type = 'submit';
+    button.textContent = 'Ajouter';
+
+    form.appendChild(input);
+    form.appendChild(button);
+
+    binContent.appendChild(h2);
+    binContent.appendChild(ul);
+    binContent.appendChild(form);
+
+    binDiv.appendChild(img);
+    binDiv.appendChild(binContent);
+
+    binsContainer.appendChild(binDiv);
+
+    setupAddItemForms();
   });
 
-  fileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Exporter le site complet (tout le HTML)
+  exportBtn.addEventListener('click', () => {
+    const htmlContent = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Tri Sélectif Exporté</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .bin {
+    background: white;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    border-radius: 6px;
+    box-shadow: 0 0 5px #ccc;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .bin img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  .bin-content {
+    flex-grow: 1;
+  }
+  .bin h2 {
+    margin: 0 0 10px;
+  }
+  ul {
+    padding-left: 20px;
+    margin: 0 0 15px;
+  }
+  li {
+    margin-bottom: 5px;
+  }
+</style>
+</head>
+<body>
+<h1>Tri Sélectif</h1>
+${binsContainer.innerHTML}
+</body>
+</html>`;
 
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (!Array.isArray(data)) throw new Error('Format JSON invalide');
+    const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
 
-        // Pour chaque poubelle, remplacer la liste par celle du fichier
-        data.forEach(binData => {
-          const bin = Array.from(document.querySelectorAll('.bin')).find(b => b.getAttribute('data-name') === binData.poubelle);
-          if (bin && Array.isArray(binData.objets)) {
-            const ul = bin.querySelector('.item-list');
-            ul.innerHTML = ''; // Vide la liste
-            binData.objets.forEach(obj => {
-              const li = document.createElement('li');
-              li.textContent = obj;
-              ul.appendChild(li);
-            });
-          }
-        });
-        alert('Données importées avec succès !');
-      } catch (err) {
-        alert('Erreur lors de l\'import : ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-
-    // Reset pour pouvoir réimporter le même fichier si besoin
-    fileInput.value = '';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "tri-selectif-export.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
+
+})();
 </script>
 
 </body>
