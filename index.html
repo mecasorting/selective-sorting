@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<title>Tri Sélectif avec images</title>
+<title>Tri Sélectif avec ajout d'objets</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -16,11 +16,11 @@
   .bin {
     background: white;
     padding: 15px 20px;
-    margin-bottom: 15px;
+    margin-bottom: 25px;
     border-radius: 6px;
     box-shadow: 0 0 5px #ccc;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 15px;
   }
   .bin img {
@@ -40,9 +40,24 @@
   ul {
     padding-left: 20px;
     margin-top: 0;
+    margin-bottom: 15px;
   }
   li {
     margin-bottom: 5px;
+  }
+  form.add-item-form {
+    display: flex;
+    gap: 8px;
+  }
+  form.add-item-form input[type="text"] {
+    flex-grow: 1;
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+  form.add-item-form button {
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
   }
 </style>
 </head>
@@ -59,6 +74,10 @@
       <li>Flacons</li>
       <li>Vases</li>
     </ul>
+    <form class="add-item-form">
+      <input type="text" placeholder="Ajouter un objet..." required />
+      <button type="submit">Ajouter</button>
+    </form>
   </div>
 </div>
 
@@ -71,6 +90,10 @@
       <li>Sacs plastiques</li>
       <li>Barquettes</li>
     </ul>
+    <form class="add-item-form">
+      <input type="text" placeholder="Ajouter un objet..." required />
+      <button type="submit">Ajouter</button>
+    </form>
   </div>
 </div>
 
@@ -83,8 +106,30 @@
       <li>Cartons</li>
       <li>Publicités</li>
     </ul>
+    <form class="add-item-form">
+      <input type="text" placeholder="Ajouter un objet..." required />
+      <button type="submit">Ajouter</button>
+    </form>
   </div>
 </div>
+
+<script>
+  // Ajoute la gestion du formulaire pour chaque poubelle
+  document.querySelectorAll('form.add-item-form').forEach(form => {
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const input = form.querySelector('input[type="text"]');
+      const val = input.value.trim();
+      if(val === '') return;
+      const ul = form.previousElementSibling; // la <ul> juste avant le form
+      const li = document.createElement('li');
+      li.textContent = val;
+      ul.appendChild(li);
+      input.value = '';
+      input.focus();
+    });
+  });
+</script>
 
 </body>
 </html>
