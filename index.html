@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Tri Sélectif avec Export</title>
+  <meta charset="UTF-8" />
+  <title>Tri Sélectif avec Export / Import</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -54,9 +54,9 @@
       padding: 6px 12px;
       cursor: pointer;
     }
-    #exportBtn {
-      display: block;
-      margin: 30px auto 0;
+    #exportBtn, #importBtn {
+      display: inline-block;
+      margin: 15px 10px 0;
       padding: 10px 20px;
       font-size: 16px;
       background: #4caf50;
@@ -64,6 +64,9 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+    }
+    #importBtn {
+      background: #2196f3;
     }
   </style>
 </head>
@@ -120,15 +123,17 @@
 </div>
 
 <button id="exportBtn">Exporter les données</button>
+<button id="importBtn">Importer les données</button>
+<input type="file" id="fileInput" accept=".json" style="display:none" />
 
 <script>
-  // Gérer ajout d'objet
+  // Ajout d'objets aux listes
   document.querySelectorAll('.add-item-form').forEach(form => {
     form.addEventListener('submit', e => {
       e.preventDefault();
       const input = form.querySelector('input');
       const text = input.value.trim();
-      if (text === '') return;
+      if (!text) return;
 
       const ul = form.parentElement.querySelector('.item-list');
       const li = document.createElement('li');
@@ -138,10 +143,10 @@
     });
   });
 
-  // Gérer export
+  // Export avec mot de passe
   document.getElementById('exportBtn').addEventListener('click', () => {
     const password = prompt('Entrez le mot de passe pour exporter :');
-    const correctPassword = 'secret123'; // 🔐 Modifie ici le mot de passe
+    const correctPassword = 'secret123'; // Modifie ici
 
     if (password !== correctPassword) {
       alert('Mot de passe incorrect.');
@@ -162,6 +167,48 @@
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+  });
+
+  // Import des données
+  const importBtn = document.getElementById('importBtn');
+  const fileInput = document.getElementById('fileInput');
+
+  importBtn.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data)) throw new Error('Format JSON invalide');
+
+        // Pour chaque poubelle, remplacer la liste par celle du fichier
+        data.forEach(binData => {
+          const bin = Array.from(document.querySelectorAll('.bin')).find(b => b.getAttribute('data-name') === binData.poubelle);
+          if (bin && Array.isArray(binData.objets)) {
+            const ul = bin.querySelector('.item-list');
+            ul.innerHTML = ''; // Vide la liste
+            binData.objets.forEach(obj => {
+              const li = document.createElement('li');
+              li.textContent = obj;
+              ul.appendChild(li);
+            });
+          }
+        });
+        alert('Données importées avec succès !');
+      } catch (err) {
+        alert('Erreur lors de l\'import : ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset pour pouvoir réimporter le même fichier si besoin
+    fileInput.value = '';
   });
 </script>
 
