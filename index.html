@@ -1,75 +1,81 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<title>Tri Sélectif avec ajout d'objets</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background: #f9f9f9;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  .bin {
-    background: white;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    border-radius: 6px;
-    box-shadow: 0 0 5px #ccc;
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  .bin img {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
-  .bin-content {
-    flex-grow: 1;
-  }
-  .bin h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
-  }
-  ul {
-    padding-left: 20px;
-    margin-top: 0;
-    margin-bottom: 15px;
-  }
-  li {
-    margin-bottom: 5px;
-  }
-  form.add-item-form {
-    display: flex;
-    gap: 8px;
-  }
-  form.add-item-form input[type="text"] {
-    flex-grow: 1;
-    padding: 6px 8px;
-    font-size: 14px;
-  }
-  form.add-item-form button {
-    padding: 6px 12px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Tri Sélectif avec Export</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .bin {
+      background: white;
+      padding: 15px 20px;
+      margin-bottom: 25px;
+      border-radius: 6px;
+      box-shadow: 0 0 5px #ccc;
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+    }
+    .bin img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .bin-content {
+      flex-grow: 1;
+    }
+    .bin h2 {
+      margin: 0 0 10px;
+    }
+    ul {
+      padding-left: 20px;
+      margin: 0 0 15px;
+    }
+    li {
+      margin-bottom: 5px;
+    }
+    form.add-item-form {
+      display: flex;
+      gap: 8px;
+    }
+    form.add-item-form input[type="text"] {
+      flex-grow: 1;
+      padding: 6px 8px;
+    }
+    form.add-item-form button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    #exportBtn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
 <h1>Tri Sélectif</h1>
 
-<div class="bin" id="bin-verre">
-  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=80&q=80" alt="Verre" />
+<div class="bin" data-name="Verre">
+  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=80&q=80" alt="Verre">
   <div class="bin-content">
     <h2>Verre</h2>
-    <ul>
+    <ul class="item-list">
       <li>Bouteilles</li>
       <li>Flacons</li>
       <li>Vases</li>
@@ -81,11 +87,11 @@
   </div>
 </div>
 
-<div class="bin" id="bin-plastique">
-  <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=80&q=80" alt="Plastique" />
+<div class="bin" data-name="Plastique">
+  <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=80&q=80" alt="Plastique">
   <div class="bin-content">
     <h2>Plastique</h2>
-    <ul>
+    <ul class="item-list">
       <li>Bidons</li>
       <li>Sacs plastiques</li>
       <li>Barquettes</li>
@@ -97,11 +103,11 @@
   </div>
 </div>
 
-<div class="bin" id="bin-papier">
-  <img src="https://images.unsplash.com/photo-1518976024611-26a7a5f52db6?auto=format&fit=crop&w=80&q=80" alt="Papier" />
+<div class="bin" data-name="Papier">
+  <img src="https://images.unsplash.com/photo-1518976024611-26a7a5f52db6?auto=format&fit=crop&w=80&q=80" alt="Papier">
   <div class="bin-content">
     <h2>Papier</h2>
-    <ul>
+    <ul class="item-list">
       <li>Journaux</li>
       <li>Cartons</li>
       <li>Publicités</li>
@@ -113,21 +119,49 @@
   </div>
 </div>
 
+<button id="exportBtn">Exporter les données</button>
+
 <script>
-  // Ajoute la gestion du formulaire pour chaque poubelle
-  document.querySelectorAll('form.add-item-form').forEach(form => {
-    form.addEventListener('submit', event => {
-      event.preventDefault();
-      const input = form.querySelector('input[type="text"]');
-      const val = input.value.trim();
-      if(val === '') return;
-      const ul = form.previousElementSibling; // la <ul> juste avant le form
+  // Gérer ajout d'objet
+  document.querySelectorAll('.add-item-form').forEach(form => {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const input = form.querySelector('input');
+      const text = input.value.trim();
+      if (text === '') return;
+
+      const ul = form.parentElement.querySelector('.item-list');
       const li = document.createElement('li');
-      li.textContent = val;
+      li.textContent = text;
       ul.appendChild(li);
       input.value = '';
-      input.focus();
     });
+  });
+
+  // Gérer export
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const password = prompt('Entrez le mot de passe pour exporter :');
+    const correctPassword = 'secret123'; // 🔐 Modifie ici le mot de passe
+
+    if (password !== correctPassword) {
+      alert('Mot de passe incorrect.');
+      return;
+    }
+
+    const bins = [];
+    document.querySelectorAll('.bin').forEach(bin => {
+      const name = bin.getAttribute('data-name');
+      const items = Array.from(bin.querySelectorAll('.item-list li')).map(li => li.textContent);
+      bins.push({ poubelle: name, objets: items });
+    });
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bins, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "tri-selectif.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
   });
 </script>
 
